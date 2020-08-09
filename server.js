@@ -100,14 +100,7 @@ app.post("/register", (req, res) => {
   //   // Store hash in your password DB.
   //   console.log(hash);
   // });
-  // database.users.push({
-  //   id: "125",
-  //   name,
-  //   email,
-  //   password,
-  //   entries: 0,
-  //   joined: new Date(),
-  // });
+
   db("users")
     .returning("*")
     .insert({
@@ -141,27 +134,18 @@ app.get("/profile/:id", (req, res) => {
     .catch((err) => {
       res.status(404).json("user not found");
     });
-  // database.users.forEach((user) => {
-  //   if (user.id === id) {
-  //     return res.json(user);
-  //   }
-  // });
-
-  // res.status(404).json("user not found");
 });
 
 /* image endpoint */
 
 app.put("/image", (req, res) => {
   const { id } = req.body;
-  database.users.forEach((user) => {
-    if (user.id === id) {
-      user.entries++;
-      return res.json(user.entries);
-    }
-  });
-
-  res.status(404).json("user not found");
+  db("users")
+    .where("id", "=", id)
+    .increment("entries", 1)
+    .returning("entries")
+    .then((entries) => res.json(entries[0]))
+    .catch((err) => res.status(400).json("unable to get entries"));
 });
 
 app.listen(3000, () => {
