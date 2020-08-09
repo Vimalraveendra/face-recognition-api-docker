@@ -1,8 +1,27 @@
 const express = require("express");
-const { json } = require("express");
+const bcrypt = require("bcrypt-nodejs");
+const cors = require("cors");
+const knex = require("knex");
+
+const db = knex({
+  client: "pg",
+  connection: {
+    host: "127.0.0.1",
+    user: "",
+    password: "",
+    database: "smart-database",
+  },
+});
+
+// db.select("*")
+//   .from("users")
+//   .then((data) => {
+//     console.log(data);
+//   });
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 const database = {
@@ -24,6 +43,13 @@ const database = {
       joined: new Date(),
     },
   ],
+  login: [
+    {
+      id: "987",
+      hash: "",
+      email: "john@gmail.com",
+    },
+  ],
 };
 
 app.get("/", (req, res) => {
@@ -32,6 +58,23 @@ app.get("/", (req, res) => {
 
 /* SignIn*/
 app.post("/signin", (req, res) => {
+  // Load hash from your password DB.
+  bcrypt.compare(
+    "apples",
+    "$2a$10$jQcPsgQjMgBgB0ht2DrTqewVVHdWnOEidK9XOt22RgslhuEX1cLAq",
+    function (err, res) {
+      // res == true
+      console.log("first guess");
+    }
+  );
+  bcrypt.compare(
+    "veggies",
+    "$2a$10$jQcPsgQjMgBgB0ht2DrTqewVVHdWnOEidK9XOt22RgslhuEX1cLAq",
+    function (err, res) {
+      // res = false
+      console.log("second guess");
+    }
+  );
   /* instead of using res.send() we can use res.json(). express  comes with a 
      build in JSON method on response that we can use and it has some added
      features when responding with json
@@ -42,7 +85,7 @@ app.post("/signin", (req, res) => {
     req.body.email === database.users[0].email &&
     req.body.password === database.users[0].password
   ) {
-    res.json("success");
+    res.json(database.users[0]);
   } else {
     res.status(400).json("error logging in");
   }
@@ -53,15 +96,31 @@ app.post("/signin", (req, res) => {
 
 app.post("/register", (req, res) => {
   const { name, email, password } = req.body;
-  database.users.push({
-    id: "125",
-    name,
-    email,
-    password,
-    entries: 0,
-    joined: new Date(),
-  });
-  res.json(database.users[database.users.length - 1]);
+  // bcrypt.hash(password, null, null, function (err, hash) {
+  //   // Store hash in your password DB.
+  //   console.log(hash);
+  // });
+  // database.users.push({
+  //   id: "125",
+  //   name,
+  //   email,
+  //   password,
+  //   entries: 0,
+  //   joined: new Date(),
+  // });
+  db("users")
+    .returning("*")
+    .insert({
+      name,
+      email,
+      joined: new Date(),
+    })
+    .then((user) => {
+      res.json(user[0]);
+    })
+    .catch((err) => {
+      res.status(400).json("unable to register");
+    });
 });
 
 /* user home profile */
