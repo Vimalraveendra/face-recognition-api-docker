@@ -126,13 +126,28 @@ app.post("/register", (req, res) => {
 /* user home profile */
 app.get("/profile/:id", (req, res) => {
   const { id } = req.params;
-  database.users.forEach((user) => {
-    if (user.id === id) {
-      return res.json(user);
-    }
-  });
+  db.select("*")
+    .from("users")
+    .where({
+      id: id,
+    })
+    .then((user) => {
+      if (user.length) {
+        res.json(user[0]);
+      } else {
+        throw error;
+      }
+    })
+    .catch((err) => {
+      res.status(404).json("user not found");
+    });
+  // database.users.forEach((user) => {
+  //   if (user.id === id) {
+  //     return res.json(user);
+  //   }
+  // });
 
-  res.status(404).json("user not found");
+  // res.status(404).json("user not found");
 });
 
 /* image endpoint */
