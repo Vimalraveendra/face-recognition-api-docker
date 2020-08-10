@@ -59,37 +59,30 @@ app.get("/", (req, res) => {
 /* SignIn*/
 app.post("/signin", (req, res) => {
   // Load hash from your password DB.
-  bcrypt.compare(
-    "apples",
-    "$2a$10$jQcPsgQjMgBgB0ht2DrTqewVVHdWnOEidK9XOt22RgslhuEX1cLAq",
-    function (err, res) {
-      // res == true
-      console.log("first guess");
-    }
-  );
-  bcrypt.compare(
-    "veggies",
-    "$2a$10$jQcPsgQjMgBgB0ht2DrTqewVVHdWnOEidK9XOt22RgslhuEX1cLAq",
-    function (err, res) {
-      // res = false
-      console.log("second guess");
-    }
-  );
+
   /* instead of using res.send() we can use res.json(). express  comes with a 
      build in JSON method on response that we can use and it has some added
      features when responding with json
     */
   // res.send("signinn");
 
-  if (
-    req.body.email === database.users[0].email &&
-    req.body.password === database.users[0].password
-  ) {
-    res.json(database.users[0]);
-  } else {
-    res.status(400).json("error logging in");
-  }
-  res.json("sigin");
+  db.select("email", "hash")
+    .from("login")
+    .where("email", "=", req.body.email)
+    .then((data) => {
+      const isValid = bcrypt.compareSync(req.body.password, data[0].hash); // true
+      if (isValid) {
+        return db
+          .select("*")
+          .from("users")
+          .where("email", "=", req.body.email)
+          .then((user) => res.json(user[0]))
+          .catch((err) => res.status(400).json("Unable to get user"));
+      } else {
+        res.status(400).json("Wrong credentials");
+      }
+    })
+    .catch((err) => res.status(400).json("Wrong credentials"));
 });
 
 /*Register*/
