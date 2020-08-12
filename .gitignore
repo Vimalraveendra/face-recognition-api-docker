@@ -1,0 +1,7 @@
+# visusalstudiocode #
+.vscode/
+.vscode/settings.json
+
+# enviromental elements
+
+.env
